@@ -1,0 +1,102 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2937;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 240px;
+    height: 100vh;
+
+    padding: 20px;
+
+    background: #1f2937;
+    color: #ffffff;
+}
+
+.sidebar-logo h1 {
+    margin: 0 0 30px;
+    font-size: 22px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-nav a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    margin-top: 20px;
+}
+
+.sidebar-section span {
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.6;
+}
+
+.footer {
+    margin-left: 240px;
+    padding: 20px;
+
+    text-align: center;
+}
+
+.main-content {
+    margin-left: 240px;
+    padding: 30px;
+    min-height: calc(100vh - 80px);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    margin: 0 0 8px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.content-card {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 8px;
+}
+
+.button {
+    display: inline-block;
+
+    padding: 10px 16px;
+
+    background: #2563eb;
+    color: #ffffff;
+
+    text-decoration: none;
+    border-radius: 6px;
+}

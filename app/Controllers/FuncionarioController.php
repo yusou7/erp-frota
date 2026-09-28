@@ -25,7 +25,7 @@ class FuncionarioController
 
     public function index(): void
     {
-        echo 'Página de funcionários';
+        require __DIR__ . '/../../views/funcionarios/index.php';
     }
 
     public function store(): void
