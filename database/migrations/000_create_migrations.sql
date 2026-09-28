@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS migrations (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    arquivo VARCHAR(255) NOT NULL,
+    executado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_migrations_arquivo UNIQUE (arquivo)
+);
