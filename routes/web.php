@@ -15,6 +15,12 @@ return function (Router $router): void {
 
         $controller->index();
     });
+    
+    $router->get('/funcionarios/novo', function (): void {
+    $controller = new FuncionarioController();
+
+    $controller->create();
+    });
 
     $router->post('/funcionarios', function (): void {
         $controller = new FuncionarioController();
