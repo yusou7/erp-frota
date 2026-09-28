@@ -1,0 +1,13 @@
+CREATE TABLE tipos_veiculos (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    nome VARCHAR(50) NOT NULL,
+    descricao VARCHAR(255),
+
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_tipos_veiculos_nome UNIQUE (nome)
+);

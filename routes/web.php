@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\FuncionarioController;
+use App\Controllers\VeiculoController;
 use App\Core\Router;
 
 return function (Router $router): void {
@@ -42,6 +43,42 @@ return function (Router $router): void {
 
 $router->post('/funcionarios/{id}/inativar', function (string $id): void {
     $controller = new FuncionarioController();
+
+    $controller->deactivate((int) $id);
+});
+
+$router->get('/veiculos', function (): void {
+    $controller = new VeiculoController();
+
+    $controller->index();
+});
+
+$router->get('/veiculos/novo', function (): void {
+    $controller = new VeiculoController();
+
+    $controller->create();
+});
+
+$router->post('/veiculos', function (): void {
+    $controller = new VeiculoController();
+
+    $controller->store();
+});
+
+$router->get('/veiculos/{id}/editar', function (string $id): void {
+    $controller = new VeiculoController();
+
+    $controller->edit((int) $id);
+});
+
+$router->post('/veiculos/{id}', function (string $id): void {
+    $controller = new VeiculoController();
+
+    $controller->update((int) $id);
+});
+
+$router->post('/veiculos/{id}/inativar', function (string $id): void {
+    $controller = new VeiculoController();
 
     $controller->deactivate((int) $id);
 });
