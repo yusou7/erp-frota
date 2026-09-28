@@ -1,0 +1,14 @@
+{
+    "name": "erp-frota/erp-frota",
+    "autoload": {
+        "psr-4": {
+            "ErpFrota\\ErpFrota\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "YuriGusmao"
+        }
+    ],
+    "require": {}
+}
