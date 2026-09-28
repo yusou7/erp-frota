@@ -1,14 +1,11 @@
 {
     "name": "erp-frota/erp-frota",
+    "description": "Sistema ERP para gestão de frota",
+    "type": "project",
+    "require": {},
     "autoload": {
         "psr-4": {
-            "ErpFrota\\ErpFrota\\": "src/"
+            "App\\": "app/"
         }
-    },
-    "authors": [
-        {
-            "name": "YuriGusmao"
-        }
-    ],
-    "require": {}
+    }
 }
