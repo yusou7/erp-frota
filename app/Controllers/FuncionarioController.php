@@ -137,4 +137,29 @@ class FuncionarioController
 
     require __DIR__ . '/../../views/funcionarios/edit.php';
     }
+
+    public function retorno(int $id): void
+{
+    $movimentacao = $this->repository->buscarPorId($id);
+
+    if ($movimentacao === null) {
+        http_response_code(404);
+
+        echo 'Movimentação não encontrada.';
+
+        return;
+    }
+
+    if ($movimentacao['status'] !== 'ABERTA') {
+        Session::setFlash(
+            'error',
+            'Somente uma movimentação aberta pode receber retorno.'
+        );
+
+        header("Location: /saidas/{$id}");
+        exit;
+    }
+
+    require __DIR__ . '/../../views/movimentacoes/retorno.php';
+}
 }

@@ -159,4 +159,6 @@ class VeiculoController
         header('Location: /veiculos');
         exit;
     }
+
+    
 }

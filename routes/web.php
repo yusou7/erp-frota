@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\FuncionarioController;
 use App\Controllers\VeiculoController;
+use App\Controllers\MovimentacaoFrotaController;
 use App\Core\Router;
 
 return function (Router $router): void {
@@ -82,4 +83,39 @@ $router->post('/veiculos/{id}/inativar', function (string $id): void {
 
     $controller->deactivate((int) $id);
 });
+
+$router->get(
+    '/saidas',
+    fn() => (new MovimentacaoFrotaController())->index()
+);
+
+$router->get(
+    '/saidas/nova',
+    fn() => (new MovimentacaoFrotaController())->create()
+);
+
+$router->post(
+    '/saidas',
+    fn() => (new MovimentacaoFrotaController())->store()
+);
+
+$router->get(
+    '/saidas/{id}/retorno',
+    fn(int $id) => (new MovimentacaoFrotaController())->retorno($id)
+);
+
+$router->post(
+    '/saidas/{id}/retorno',
+    fn(int $id) => (new MovimentacaoFrotaController())->return($id)
+);
+
+$router->post(
+    '/saidas/{id}/cancelar',
+    fn(int $id) => (new MovimentacaoFrotaController())->cancelar($id)
+);
+
+$router->get(
+    '/saidas/{id}',
+    fn(int $id) => (new MovimentacaoFrotaController())->show($id)
+);
 };
