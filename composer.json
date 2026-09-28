@@ -2,7 +2,9 @@
     "name": "erp-frota/erp-frota",
     "description": "Sistema ERP para gestão de frota",
     "type": "project",
-    "require": {},
+    "require": {
+        "vlucas/phpdotenv": "^5.7"
+    },
     "autoload": {
         "psr-4": {
             "App\\": "app/"
