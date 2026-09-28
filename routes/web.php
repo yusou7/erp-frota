@@ -15,7 +15,7 @@ return function (Router $router): void {
 
         $controller->index();
     });
-    
+
     $router->get('/funcionarios/novo', function (): void {
     $controller = new FuncionarioController();
 
@@ -27,4 +27,22 @@ return function (Router $router): void {
 
         $controller->store();
     });
+
+    $router->get('/funcionarios/{id}/editar', function (string $id): void {
+    $controller = new FuncionarioController();
+
+    $controller->edit((int) $id);
+});
+
+    $router->post('/funcionarios/{id}', function (string $id): void {
+    $controller = new FuncionarioController();
+
+    $controller->update((int) $id);
+});
+
+$router->post('/funcionarios/{id}/inativar', function (string $id): void {
+    $controller = new FuncionarioController();
+
+    $controller->deactivate((int) $id);
+});
 };

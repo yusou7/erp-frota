@@ -22,7 +22,7 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 
     <?php endif; ?>
-    
+
     <header class="page-header">
         <div>
             <h2>Funcionários</h2>
@@ -49,6 +49,7 @@ require __DIR__ . '/../layouts/header.php';
                     <th>CPF</th>
                     <th>Função</th>
                     <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
 
@@ -73,8 +74,31 @@ require __DIR__ . '/../layouts/header.php';
                         </td>
 
                         <td>
-                            <?= $funcionario['ativo'] ? 'Ativo' : 'Inativo' ?>
-                        </td>
+    <a
+        href="/funcionarios/<?= (int) $funcionario['id'] ?>/editar"
+        class="button button-small"
+    >
+        Editar
+    </a>
+
+    <?php if ($funcionario['ativo']): ?>
+
+        <form
+            method="POST"
+            action="/funcionarios/<?= (int) $funcionario['id'] ?>/inativar"
+            style="display: inline;"
+            onsubmit="return confirm('Tem certeza que deseja inativar este funcionário?');"
+        >
+            <button
+                type="submit"
+                class="button button-small button-danger"
+            >
+                Inativar
+            </button>
+        </form>
+
+    <?php endif; ?>
+</td>
                     </tr>
 
                 <?php endforeach; ?>

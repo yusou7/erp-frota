@@ -150,4 +150,49 @@ class FuncionarioRepository
 
         return (int) $statement->fetchColumn();
     }
+
+    public function atualizar(int $id, array $dados): void
+    {
+    $sql = <<<SQL
+    UPDATE funcionarios
+    SET
+        nome = :nome,
+        cpf = :cpf,
+        matricula = :matricula,
+        telefone = :telefone,
+        email = :email,
+        funcao_id = :funcao_id,
+        atualizado_em = NOW()
+    WHERE id = :id
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'id' => $id,
+        'nome' => $dados['nome'],
+        'cpf' => $dados['cpf'],
+        'matricula' => $dados['matricula'],
+        'telefone' => $dados['telefone'],
+        'email' => $dados['email'],
+        'funcao_id' => $dados['funcao_id'],
+    ]);
+    }
+
+    public function inativar(int $id): void
+{
+    $sql = <<<SQL
+    UPDATE funcionarios
+    SET
+        ativo = FALSE,
+        atualizado_em = NOW()
+    WHERE id = :id
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'id' => $id,
+    ]);
+}
 }

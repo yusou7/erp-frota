@@ -68,10 +68,73 @@ class FuncionarioController
     }
     }
 
+    public function update(int $id): void
+    {
+    try {
+        $this->service->atualizar($id, $_POST);
+
+        Session::setFlash(
+            'success',
+            'Funcionário atualizado com sucesso.'
+        );
+
+        header('Location: /funcionarios');
+        exit;
+    } catch (InvalidArgumentException $exception) {
+        Session::setFlash(
+            'error',
+            $exception->getMessage()
+        );
+
+        header("Location: /funcionarios/{$id}/editar");
+        exit;
+    }
+    }
+
+    public function deactivate(int $id): void
+{
+    try {
+        $this->service->inativar($id);
+
+        Session::setFlash(
+            'success',
+            'Funcionário inativado com sucesso.'
+        );
+
+        header('Location: /funcionarios');
+        exit;
+    } catch (InvalidArgumentException $exception) {
+        Session::setFlash(
+            'error',
+            $exception->getMessage()
+        );
+
+        header('Location: /funcionarios');
+        exit;
+    }
+}
+
     public function create(): void
     {
     $funcoes = $this->funcaoRepository->listarAtivas();
 
     require __DIR__ . '/../../views/funcionarios/create.php';
+    }
+
+    public function edit(int $id): void
+    {
+    $funcionario = $this->repository->buscarPorId($id);
+
+    if ($funcionario === null) {
+        http_response_code(404);
+
+        echo 'Funcionário não encontrado.';
+
+        return;
+    }
+
+    $funcoes = $this->funcaoRepository->listarAtivas();
+
+    require __DIR__ . '/../../views/funcionarios/edit.php';
     }
 }

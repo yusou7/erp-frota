@@ -19,17 +19,27 @@ class Router
     }
 
     public function dispatch(string $method, string $path): void
-    {
-        $handler = $this->routes[$method][$path] ?? null;
+{
+    foreach ($this->routes[$method] ?? [] as $route => $handler) {
+        $pattern = preg_replace(
+            '#\{([^}]+)\}#',
+            '([^/]+)',
+            $route
+        );
 
-        if ($handler === null) {
-            http_response_code(404);
+        $pattern = '#^' . $pattern . '$#';
 
-            echo 'Página não encontrada.';
+        if (preg_match($pattern, $path, $matches)) {
+            array_shift($matches);
+
+            call_user_func($handler, ...$matches);
 
             return;
         }
-
-        call_user_func($handler);
     }
+
+    http_response_code(404);
+
+    echo 'Página não encontrada.';
+}
 }
