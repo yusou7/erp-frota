@@ -7,6 +7,7 @@ use App\Controllers\VeiculoController;
 use App\Controllers\MovimentacaoFrotaController;
 use App\Controllers\ChecklistModeloController;
 use App\Controllers\ChecklistItemController;
+use App\Controllers\ChecklistExecucaoController;
 use App\Core\Router;
 
 return function (Router $router): void {
@@ -86,6 +87,7 @@ $router->post('/veiculos/{id}/inativar', function (string $id): void {
     $controller->deactivate((int) $id);
 });
 
+
 $router->get(
     '/saidas',
     fn() => (new MovimentacaoFrotaController())->index()
@@ -99,6 +101,13 @@ $router->get(
 $router->post(
     '/saidas',
     fn() => (new MovimentacaoFrotaController())->store()
+);
+
+$router->get(
+    '/saidas/checklist-veiculo/{veiculoId}',
+    fn(int $veiculoId) =>
+        (new MovimentacaoFrotaController())
+            ->checklistVeiculo($veiculoId)
 );
 
 $router->get(
@@ -176,5 +185,46 @@ $router->post(
             $modeloId,
             $itemId
         )
+);
+
+$router->get(
+    '/saidas/{movimentacaoId}/checklist',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())->show($movimentacaoId)
+);
+
+$router->get(
+    '/saidas/{movimentacaoId}/checklist/retorno',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())
+            ->show($movimentacaoId, 'RETORNO')
+);
+
+$router->post(
+    '/saidas/{movimentacaoId}/checklist/resposta',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())
+            ->salvarResposta($movimentacaoId)
+);
+
+$router->post(
+    '/saidas/{movimentacaoId}/checklist/finalizar',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())
+            ->finalizar($movimentacaoId)
+);
+
+$router->post(
+    '/saidas/{movimentacaoId}/checklist/retorno/resposta',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())
+            ->salvarResposta($movimentacaoId, 'RETORNO')
+);
+
+$router->post(
+    '/saidas/{movimentacaoId}/checklist/retorno/finalizar',
+    fn(int $movimentacaoId) =>
+        (new ChecklistExecucaoController())
+            ->finalizar($movimentacaoId, 'RETORNO')
 );
 };

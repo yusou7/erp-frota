@@ -175,6 +175,34 @@ $unidadeIndicador = $indicadorTipo === 'KM'
                     Cancelar
                 </a>
 
+                <div id="checklist-container" style="display: none; margin-top: 20px;">
+    <h3>Checklist de retorno</h3>
+
+    <div id="checklist-loading">
+        Carregando checklist...
+    </div>
+
+    <div id="checklist-sem-modelo" style="display: none;">
+        Este veículo não possui checklist configurado.
+    </div>
+
+    <table
+        id="checklist-tabela"
+        style="display: none; width: 100%;"
+    >
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Obrigatório</th>
+                <th>Status</th>
+                <th>Observação</th>
+            </tr>
+        </thead>
+
+        <tbody id="checklist-itens"></tbody>
+    </table>
+</div>
+
                 <button
                     type="submit"
                     class="btn btn-primary"
@@ -185,6 +213,99 @@ $unidadeIndicador = $indicadorTipo === 'KM'
             </div>
 
         </form>
+
+        <script>
+const checklistContainer = document.getElementById(
+    'checklist-container'
+);
+
+const checklistLoading = document.getElementById(
+    'checklist-loading'
+);
+
+const checklistSemModelo = document.getElementById(
+    'checklist-sem-modelo'
+);
+
+const checklistTabela = document.getElementById(
+    'checklist-tabela'
+);
+
+const checklistItens = document.getElementById(
+    'checklist-itens'
+);
+
+const veiculoId = <?= (int) $movimentacao['veiculo_id'] ?>;
+
+checklistContainer.style.display = 'block';
+
+fetch('/saidas/checklist-veiculo/' + veiculoId)
+    .then(function (response) {
+        if (!response.ok) {
+            throw new Error(
+                'Não foi possível carregar o checklist.'
+            );
+        }
+
+        return response.json();
+    })
+    .then(function (data) {
+        checklistLoading.style.display = 'none';
+
+        if (!data.modelo || !data.itens.length) {
+            checklistSemModelo.style.display = 'block';
+            return;
+        }
+
+        data.itens.forEach(function (item) {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>
+                    ${item.descricao}
+                </td>
+
+                <td>
+                    ${item.obrigatorio ? 'Sim' : 'Não'}
+                </td>
+
+                <td>
+                    <select
+                        name="checklist[${item.id}][status]"
+                        ${item.obrigatorio ? 'required' : ''}
+                    >
+                        <option value="">Selecione</option>
+                        <option value="OK">OK</option>
+                        <option value="DEFEITO">Defeito</option>
+                        <option value="NAO_APLICA">
+                            Não se aplica
+                        </option>
+                    </select>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="checklist[${item.id}][observacao]"
+                        placeholder="Observação"
+                    >
+                </td>
+            `;
+
+            checklistItens.appendChild(tr);
+        });
+
+        checklistTabela.style.display = 'table';
+    })
+    .catch(function () {
+        checklistLoading.style.display = 'none';
+
+        checklistSemModelo.textContent =
+            'Erro ao carregar o checklist.';
+
+        checklistSemModelo.style.display = 'block';
+    });
+</script>
 
     </div>
 

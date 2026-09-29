@@ -10,6 +10,7 @@ use App\Repositories\ChecklistRepository;
 use App\Repositories\MovimentacaoFrotaRepository;
 use App\Services\ChecklistService;
 use App\Services\MovimentacaoFrotaService;
+use App\Repositories\ChecklistExecucaoRepository;
 
 class MovimentacaoFrotaController
 {
@@ -28,12 +29,17 @@ class MovimentacaoFrotaController
     );
 
     $checklistRepository = new ChecklistRepository(
-        $connection
-    );
+    $connection
+);
 
-    $checklistService = new ChecklistService(
-        $checklistRepository
-    );
+$checklistExecucaoRepository = new ChecklistExecucaoRepository(
+    $connection
+);
+
+$checklistService = new ChecklistService(
+    $checklistRepository,
+    $checklistExecucaoRepository
+);
 
     $this->service = new MovimentacaoFrotaService(
         $this->repository,
@@ -59,9 +65,69 @@ public function create(): void
     $motoristas = $this->repository
         ->listarMotoristasDisponiveis();
 
+    $checklistRepository = new ChecklistRepository(
+        $this->repository->getConnection()
+    );
+
     require __DIR__ . '/../../views/movimentacoes/create.php';
 }
 
+public function checklistVeiculo(int $veiculoId): void
+{
+    $veiculo = $this->repository
+        ->buscarVeiculoParaMovimentacao($veiculoId);
+
+    if ($veiculo === null) {
+        http_response_code(404);
+
+        header('Content-Type: application/json');
+
+        echo json_encode([
+            'erro' => 'Veículo não encontrado.'
+        ]);
+
+        return;
+    }
+
+    $checklistRepository = new ChecklistRepository(
+        $this->repository->getConnection()
+    );
+
+    $modelo = $checklistRepository
+        ->buscarModeloAtivoPorTipoVeiculo(
+            (int) $veiculo['tipo_veiculo_id']
+        );
+
+    if ($modelo === null) {
+        header('Content-Type: application/json');
+
+        echo json_encode([
+            'modelo' => null,
+            'itens' => []
+        ]);
+
+        return;
+    }
+
+    $execucaoRepository = new \App\Repositories\ChecklistExecucaoRepository(
+        $this->repository->getConnection()
+    );
+
+    $itens = $execucaoRepository->listarItens(
+        (int) $modelo['id']
+    );
+
+    header('Content-Type: application/json');
+
+    echo json_encode([
+        'modelo' => [
+            'id' => (int) $modelo['id'],
+            'nome' => $modelo['nome'],
+            'descricao' => $modelo['descricao'],
+        ],
+        'itens' => $itens,
+    ]);
+}
 public function store(): void
 {
     try {

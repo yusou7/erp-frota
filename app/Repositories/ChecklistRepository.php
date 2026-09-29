@@ -41,36 +41,40 @@ class ChecklistRepository
     }
 
     public function criar(
-        int $movimentacaoId,
-        int $checklistModeloId,
-        ?int $usuarioId = null
-    ): int {
-        $sql = "
-            INSERT INTO checklists (
-                movimentacao_id,
-                checklist_modelo_id,
-                usuario_id,
-                status
-            )
-            VALUES (
-                :movimentacao_id,
-                :checklist_modelo_id,
-                :usuario_id,
-                'EM_ANDAMENTO'
-            )
-            RETURNING id
-        ";
+    int $movimentacaoId,
+    int $checklistModeloId,
+    string $tipo = 'SAIDA',
+    ?int $usuarioId = null
+): int {
+    $sql = "
+        INSERT INTO checklists (
+            movimentacao_id,
+            checklist_modelo_id,
+            tipo,
+            usuario_id,
+            status
+        )
+        VALUES (
+            :movimentacao_id,
+            :checklist_modelo_id,
+            :tipo,
+            :usuario_id,
+            'EM_ANDAMENTO'
+        )
+        RETURNING id
+    ";
 
-        $stmt = $this->connection->prepare($sql);
+    $stmt = $this->connection->prepare($sql);
 
-        $stmt->execute([
-            'movimentacao_id' => $movimentacaoId,
-            'checklist_modelo_id' => $checklistModeloId,
-            'usuario_id' => $usuarioId,
-        ]);
+    $stmt->execute([
+        'movimentacao_id' => $movimentacaoId,
+        'checklist_modelo_id' => $checklistModeloId,
+        'tipo' => $tipo,
+        'usuario_id' => $usuarioId,
+    ]);
 
-        return (int) $stmt->fetchColumn();
-    }
+    return (int) $stmt->fetchColumn();
+}
 
     public function getConnection(): PDO
     {

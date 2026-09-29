@@ -226,6 +226,32 @@ $flash = \App\Core\Session::getFlash();
                     Cancelar
                 </a>
 
+                <div id="checklist-container" style="display: none; margin-top: 20px;">
+    <h3>Checklist de saída</h3>
+
+    <div id="checklist-loading" style="display: none;">
+        Carregando checklist...
+    </div>
+
+    <div id="checklist-sem-modelo" style="display: none;">
+        Este veículo não possui checklist configurado.
+    </div>
+
+    <table id="checklist-tabela" style="display: none; width: 100%;">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Obrigatório</th>
+                <th>Status</th>
+                <th>Observação</th>
+            </tr>
+        </thead>
+
+        <tbody id="checklist-itens">
+        </tbody>
+    </table>
+</div>
+
                 <button
                     type="submit"
                     class="btn btn-primary"
@@ -236,6 +262,115 @@ $flash = \App\Core\Session::getFlash();
             </div>
 
         </form>
+
+        <script>
+const selectVeiculo = document.getElementById('veiculo_id');
+
+const checklistContainer = document.getElementById(
+    'checklist-container'
+);
+
+const checklistLoading = document.getElementById(
+    'checklist-loading'
+);
+
+const checklistSemModelo = document.getElementById(
+    'checklist-sem-modelo'
+);
+
+const checklistTabela = document.getElementById(
+    'checklist-tabela'
+);
+
+const checklistItens = document.getElementById(
+    'checklist-itens'
+);
+
+selectVeiculo.addEventListener('change', async function () {
+    const veiculoId = this.value;
+
+    checklistItens.innerHTML = '';
+
+    checklistContainer.style.display = 'none';
+    checklistLoading.style.display = 'none';
+    checklistSemModelo.style.display = 'none';
+    checklistTabela.style.display = 'none';
+
+    if (!veiculoId) {
+        return;
+    }
+
+    checklistContainer.style.display = 'block';
+    checklistLoading.style.display = 'block';
+
+    try {
+        const response = await fetch(
+            '/saidas/checklist-veiculo/' + veiculoId
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                'Não foi possível carregar o checklist.'
+            );
+        }
+
+        const data = await response.json();
+
+        checklistLoading.style.display = 'none';
+
+        if (!data.modelo || !data.itens.length) {
+            checklistSemModelo.style.display = 'block';
+            return;
+        }
+
+        data.itens.forEach(function (item) {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>
+                    ${item.descricao}
+                </td>
+
+                <td>
+                    ${item.obrigatorio ? 'Sim' : 'Não'}
+                </td>
+
+                <td>
+                    <select
+                        name="checklist[${item.id}][status]"
+                        required="${item.obrigatorio}"
+                    >
+                        <option value="">Selecione</option>
+                        <option value="OK">OK</option>
+                        <option value="DEFEITO">Defeito</option>
+                        <option value="NAO_APLICA">Não se aplica</option>
+                    </select>
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="checklist[${item.id}][observacao]"
+                        placeholder="Observação"
+                    >
+                </td>
+            `;
+
+            checklistItens.appendChild(tr);
+        });
+
+        checklistTabela.style.display = 'table';
+
+    } catch (error) {
+        checklistLoading.style.display = 'none';
+
+        checklistSemModelo.textContent =
+            'Erro ao carregar o checklist.';
+
+        checklistSemModelo.style.display = 'block';
+    }
+});
+</script>
 
     </div>
 

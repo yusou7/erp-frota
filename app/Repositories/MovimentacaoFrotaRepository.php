@@ -178,14 +178,15 @@ public function listarVeiculosDisponiveis(): array
 {
     $sql = <<<SQL
     SELECT
-        v.id,
-        v.numero,
-        v.placa,
-        v.marca,
-        v.modelo,
-        v.indicador_tipo,
-        v.indicador_atual,
-        tv.nome AS tipo_veiculo
+    v.id,
+    v.numero,
+    v.placa,
+    v.marca,
+    v.modelo,
+    v.tipo_veiculo_id,
+    v.indicador_tipo,
+    v.indicador_atual,
+    tv.nome AS tipo_veiculo
 
     FROM veiculos v
 

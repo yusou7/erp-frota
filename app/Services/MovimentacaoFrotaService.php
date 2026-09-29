@@ -383,6 +383,14 @@ public function criarSaida(array $dados): int
 {
     $dadosValidados = $this->validarSaida($dados);
 
+    $checklistRespostas = $dados['checklist'] ?? [];
+
+    if (!is_array($checklistRespostas)) {
+        throw new \InvalidArgumentException(
+            'Dados do checklist inválidos.'
+        );
+    }
+
     $veiculo = $this->repository->buscarVeiculoParaMovimentacao(
         (int) $dadosValidados['veiculo_id']
     );
@@ -398,6 +406,52 @@ public function criarSaida(array $dados): int
             (int) $veiculo['tipo_veiculo_id']
         );
 
+    if ($modeloChecklist !== null) {
+        $itensChecklist = $this->checklistService
+            ->listarItens(
+                (int) $modeloChecklist['id']
+            );
+
+        foreach ($itensChecklist as $item) {
+            if (!$item['obrigatorio']) {
+                continue;
+            }
+
+            $itemId = (int) $item['id'];
+
+            $resposta = $checklistRespostas[$itemId] ?? null;
+
+            if (!is_array($resposta)) {
+                throw new \InvalidArgumentException(
+                    'O item "' . $item['descricao'] .
+                    '" precisa ser respondido.'
+                );
+            }
+
+            $status = trim(
+                $resposta['status'] ?? ''
+            );
+
+            if ($status === '') {
+                throw new \InvalidArgumentException(
+                    'O item "' . $item['descricao'] .
+                    '" precisa ter um status informado.'
+                );
+            }
+
+            if (!in_array(
+                $status,
+                ['OK', 'DEFEITO', 'NAO_APLICA'],
+                true
+            )) {
+                throw new \InvalidArgumentException(
+                    'Status inválido no item "' .
+                    $item['descricao'] . '".'
+                );
+            }
+        }
+    }
+
     $connection = $this->repository->getConnection();
 
     $connection->beginTransaction();
@@ -408,15 +462,36 @@ public function criarSaida(array $dados): int
         );
 
         if ($modeloChecklist !== null) {
-            $this->checklistService->criar(
+            $checklistId = $this->checklistService->criar(
                 $movimentacaoId,
-                (int) $modeloChecklist['id']
+                (int) $modeloChecklist['id'],
+                'SAIDA'
             );
+
+            foreach ($checklistRespostas as $itemId => $resposta) {
+                $status = trim(
+                    $resposta['status'] ?? ''
+                );
+
+                $observacao = trim(
+                    $resposta['observacao'] ?? ''
+                );
+
+                $this->checklistService->salvarResposta(
+                    $checklistId,
+                    (int) $itemId,
+                    $status,
+                    $observacao !== ''
+                        ? $observacao
+                        : null
+                );
+            }
         }
 
         $connection->commit();
 
         return $movimentacaoId;
+
     } catch (\Throwable $exception) {
         $connection->rollBack();
 
@@ -433,7 +508,77 @@ public function registrarRetorno(
         $dados
     );
 
+    $checklistRespostas = $dados['checklist'] ?? [];
+
+if (!is_array($checklistRespostas)) {
+    throw new \InvalidArgumentException(
+        'Dados do checklist de retorno inválidos.'
+    );
+}
+
+if ($modeloChecklist !== null) {
+    $itensChecklist = $this->checklistService
+        ->listarItens(
+            (int) $modeloChecklist['id']
+        );
+
+    foreach ($itensChecklist as $item) {
+        if (!$item['obrigatorio']) {
+            continue;
+        }
+
+        $itemId = (int) $item['id'];
+
+        $resposta = $checklistRespostas[$itemId] ?? null;
+
+        if (!is_array($resposta)) {
+            throw new \InvalidArgumentException(
+                'O item "' . $item['descricao'] .
+                '" precisa ser respondido.'
+            );
+        }
+
+        $status = trim(
+            $resposta['status'] ?? ''
+        );
+
+        if ($status === '') {
+            throw new \InvalidArgumentException(
+                'O item "' . $item['descricao'] .
+                '" precisa ter um status informado.'
+            );
+        }
+
+        if (!in_array(
+            $status,
+            ['OK', 'DEFEITO', 'NAO_APLICA'],
+            true
+        )) {
+            throw new \InvalidArgumentException(
+                'Status inválido no item "' .
+                $item['descricao'] . '".'
+            );
+        }
+    }
+}
+
     $movimentacao = $dadosValidados['movimentacao'];
+
+    $veiculo = $this->repository
+    ->buscarVeiculoParaMovimentacao(
+        (int) $movimentacao['veiculo_id']
+    );
+
+if ($veiculo === null) {
+    throw new \InvalidArgumentException(
+        'O veículo da movimentação não foi encontrado.'
+    );
+}
+
+$modeloChecklist = $this->checklistService
+    ->buscarModeloAtivoPorTipoVeiculo(
+        (int) $veiculo['tipo_veiculo_id']
+    );
 
     $connection = $this->repository->getConnection();
 
@@ -453,6 +598,33 @@ public function registrarRetorno(
                     $dadosValidados['observacoes_retorno'],
             ]
         );
+
+        if ($modeloChecklist !== null) {
+    $checklistId = $this->checklistService->criar(
+        $movimentacaoId,
+        (int) $modeloChecklist['id'],
+        'RETORNO'
+    );
+
+    foreach ($checklistRespostas as $itemId => $resposta) {
+        $status = trim(
+            $resposta['status'] ?? ''
+        );
+
+        $observacao = trim(
+            $resposta['observacao'] ?? ''
+        );
+
+        $this->checklistService->salvarResposta(
+            $checklistId,
+            (int) $itemId,
+            $status,
+            $observacao !== ''
+                ? $observacao
+                : null
+        );
+    }
+}
 
         $this->repository->atualizarIndicadorVeiculo(
             (int) $movimentacao['veiculo_id'],
