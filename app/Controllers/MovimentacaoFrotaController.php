@@ -6,7 +6,9 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Core\Session;
+use App\Repositories\ChecklistRepository;
 use App\Repositories\MovimentacaoFrotaRepository;
+use App\Services\ChecklistService;
 use App\Services\MovimentacaoFrotaService;
 
 class MovimentacaoFrotaController
@@ -16,19 +18,28 @@ class MovimentacaoFrotaController
     private MovimentacaoFrotaRepository $repository;
 
     public function __construct()
-    {
-        $database = new Database();
+{
+    $database = new Database();
 
-        $connection = $database->getConnection();
+    $connection = $database->getConnection();
 
-        $this->repository = new MovimentacaoFrotaRepository(
-            $connection
-        );
+    $this->repository = new MovimentacaoFrotaRepository(
+        $connection
+    );
 
-        $this->service = new MovimentacaoFrotaService(
-            $this->repository
-        );
-    }
+    $checklistRepository = new ChecklistRepository(
+        $connection
+    );
+
+    $checklistService = new ChecklistService(
+        $checklistRepository
+    );
+
+    $this->service = new MovimentacaoFrotaService(
+        $this->repository,
+        $checklistService
+    );
+}
 
     public function index(): void
 {

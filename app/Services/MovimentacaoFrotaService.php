@@ -9,9 +9,10 @@ use App\Repositories\MovimentacaoFrotaRepository;
 class MovimentacaoFrotaService
 {
     public function __construct(
-        private MovimentacaoFrotaRepository $repository
-    ) {
-    }
+    private MovimentacaoFrotaRepository $repository,
+    private ChecklistService $checklistService
+) {
+}
 
     public function validarSaida(array $dados): array
 {
@@ -382,9 +383,45 @@ public function criarSaida(array $dados): int
 {
     $dadosValidados = $this->validarSaida($dados);
 
-    return $this->repository->criar(
-        $dadosValidados
+    $veiculo = $this->repository->buscarVeiculoParaMovimentacao(
+        (int) $dadosValidados['veiculo_id']
     );
+
+    if ($veiculo === null) {
+        throw new \InvalidArgumentException(
+            'O veículo informado não foi encontrado.'
+        );
+    }
+
+    $modeloChecklist = $this->checklistService
+        ->buscarModeloAtivoPorTipoVeiculo(
+            (int) $veiculo['tipo_veiculo_id']
+        );
+
+    $connection = $this->repository->getConnection();
+
+    $connection->beginTransaction();
+
+    try {
+        $movimentacaoId = $this->repository->criar(
+            $dadosValidados
+        );
+
+        if ($modeloChecklist !== null) {
+            $this->checklistService->criar(
+                $movimentacaoId,
+                (int) $modeloChecklist['id']
+            );
+        }
+
+        $connection->commit();
+
+        return $movimentacaoId;
+    } catch (\Throwable $exception) {
+        $connection->rollBack();
+
+        throw $exception;
+    }
 }
 
 public function registrarRetorno(
