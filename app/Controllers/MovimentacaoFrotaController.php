@@ -11,6 +11,8 @@ use App\Repositories\MovimentacaoFrotaRepository;
 use App\Services\ChecklistService;
 use App\Services\MovimentacaoFrotaService;
 use App\Repositories\ChecklistExecucaoRepository;
+use App\Repositories\FuncionarioRepository;
+use App\Repositories\VeiculoRepository;
 
 class MovimentacaoFrotaController
 {
@@ -18,15 +20,32 @@ class MovimentacaoFrotaController
 
     private MovimentacaoFrotaRepository $repository;
 
+    private VeiculoRepository $veiculoRepository;
+
+    private FuncionarioRepository $funcionarioRepository;
+
     public function __construct()
 {
     $database = new Database();
 
     $connection = $database->getConnection();
 
+    $veiculoRepository = new VeiculoRepository(
+    $connection
+);
+
+    $funcionarioRepository = new FuncionarioRepository(
+    $connection
+);
+
+
     $this->repository = new MovimentacaoFrotaRepository(
         $connection
     );
+
+    $this->veiculoRepository = $veiculoRepository;
+
+    $this->funcionarioRepository = $funcionarioRepository;
 
     $checklistRepository = new ChecklistRepository(
     $connection
@@ -49,7 +68,24 @@ $checklistService = new ChecklistService(
 
     public function index(): void
 {
-    $movimentacoes = $this->repository->listarTodos();
+    $filtros = [
+    'status' => $_GET['status'] ?? '',
+    'status_autorizacao_saida' =>
+        $_GET['status_autorizacao_saida'] ?? '',
+    'data_inicial' => $_GET['data_inicial'] ?? '',
+    'data_final' => $_GET['data_final'] ?? '',
+    'veiculo_id' => $_GET['veiculo_id'] ?? '',
+    'motorista_id' => $_GET['motorista_id'] ?? '',
+];
+
+    $movimentacoes = $this->repository
+        ->listarTodos($filtros);
+
+    $veiculos = $this->veiculoRepository
+        ->listarTodos();
+
+    $funcionarios = $this->funcionarioRepository
+        ->listarTodos();
 
     require __DIR__ . '/../../views/movimentacoes/index.php';
 }

@@ -13,8 +13,9 @@ class MovimentacaoFrotaRepository
     ) {
     }
 
-    public function listarTodos(): array
-{
+    public function listarTodos(
+    array $filtros = []
+): array {
     $sql = <<<SQL
     SELECT
         m.id,
@@ -25,6 +26,7 @@ class MovimentacaoFrotaRepository
         m.destino,
         m.finalidade,
         m.status,
+        m.status_autorizacao_saida,
 
         v.numero AS veiculo_numero,
         v.placa AS veiculo_placa,
@@ -45,10 +47,79 @@ class MovimentacaoFrotaRepository
     LEFT JOIN veiculos c
         ON c.id = m.carreta_id
 
-    ORDER BY m.data_hora_saida DESC
+    WHERE 1 = 1
     SQL;
 
-    $statement = $this->connection->query($sql);
+    $params = [];
+
+    if (
+        !empty($filtros['status'])
+        && in_array(
+            $filtros['status'],
+            [
+                'ABERTA',
+                'FINALIZADA',
+                'CANCELADA',
+            ],
+            true
+        )
+    ) {
+        $sql .= ' AND m.status = :status';
+
+        $params['status'] = $filtros['status'];
+    }
+
+    if (
+    !empty($filtros['status_autorizacao_saida'])
+    && in_array(
+        $filtros['status_autorizacao_saida'],
+        [
+            'PENDENTE',
+            'AUTORIZADA',
+            'RECUSADA',
+        ],
+        true
+    )
+) {
+    $sql .= ' AND m.status_autorizacao_saida = :status_autorizacao_saida';
+
+    $params['status_autorizacao_saida'] =
+        $filtros['status_autorizacao_saida'];
+}
+
+if (!empty($filtros['data_inicial'])) {
+    $sql .= ' AND m.data_hora_saida >= :data_inicial';
+
+    $params['data_inicial'] =
+        $filtros['data_inicial'] . ' 00:00:00';
+}
+
+if (!empty($filtros['data_final'])) {
+    $sql .= ' AND m.data_hora_saida <= :data_final';
+
+    $params['data_final'] =
+        $filtros['data_final'] . ' 23:59:59';
+}
+
+if (!empty($filtros['veiculo_id'])) {
+    $sql .= ' AND m.veiculo_id = :veiculo_id';
+
+    $params['veiculo_id'] =
+        (int) $filtros['veiculo_id'];
+}
+
+if (!empty($filtros['motorista_id'])) {
+    $sql .= ' AND m.motorista_id = :motorista_id';
+
+    $params['motorista_id'] =
+        (int) $filtros['motorista_id'];
+}
+
+    $sql .= ' ORDER BY m.data_hora_saida DESC';
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute($params);
 
     return $statement->fetchAll();
 }
