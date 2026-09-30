@@ -11,6 +11,14 @@
 
     $tipoChecklist = $tipo ?? 'SAIDA';
 
+    $checklistBloqueado =
+    $checklist['status'] === 'CONCLUIDO'
+    || (
+        $tipoChecklist === 'SAIDA'
+        && ($checklist['status_autorizacao_saida'] ?? 'PENDENTE')
+            === 'AUTORIZADA'
+    );
+
 $rotaChecklist = $tipoChecklist === 'RETORNO'
     ? '/saidas/' . (int) $checklist['movimentacao_id'] . '/checklist/retorno'
     : '/saidas/' . (int) $checklist['movimentacao_id'] . '/checklist';
@@ -113,10 +121,11 @@ $rotaChecklist = $tipoChecklist === 'RETORNO'
 
                                 <td>
                                     <select
-                                        name="status"
-                                        form="checklist-item-<?= $itemId ?>"
-                                        required
-                                    >
+    name="status"
+    form="checklist-item-<?= $itemId ?>"
+    required
+    <?= $checklistBloqueado ? 'disabled' : '' ?>
+>
 
                                         <option value="">
                                             Selecione
@@ -157,10 +166,11 @@ $rotaChecklist = $tipoChecklist === 'RETORNO'
 
                                 <td>
                                     <input
-                                        type="text"
-                                        name="observacao"
-                                        form="checklist-item-<?= $itemId ?>"
-                                        placeholder="Observação"
+    type="text"
+    name="observacao"
+    form="checklist-item-<?= $itemId ?>"
+    placeholder="Observação"
+    <?= $checklistBloqueado ? 'disabled' : '' ?>
                                         value="<?= htmlspecialchars(
                                             $resposta['observacao'] ?? ''
                                         ) ?>"
@@ -181,12 +191,16 @@ $rotaChecklist = $tipoChecklist === 'RETORNO'
                                             value="<?= $itemId ?>"
                                         >
 
-                                        <button
-                                            type="submit"
-                                            class="btn btn-primary"
-                                        >
-                                            Salvar
-                                        </button>
+                                        <?php if (!$checklistBloqueado): ?>
+
+    <button
+        type="submit"
+        class="btn btn-primary"
+    >
+        Salvar
+    </button>
+
+<?php endif; ?>
 
                                     </form>
 

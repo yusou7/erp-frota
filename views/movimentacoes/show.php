@@ -95,12 +95,37 @@ $statusLabel = match ($status) {
             </div>
 
             <div class="form-group">
-                <label>Status</label>
+    <label>Status</label>
 
-                <div>
-                    <?= htmlspecialchars($statusLabel) ?>
-                </div>
-            </div>
+    <div>
+        <?= htmlspecialchars($statusLabel) ?>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>Autorização da saída</label>
+
+    <div>
+        <?php
+        $statusAutorizacao =
+            $movimentacao['status_autorizacao_saida']
+            ?? 'PENDENTE';
+
+        $statusAutorizacaoLabel = match (
+            $statusAutorizacao
+        ) {
+            'PENDENTE' => 'Pendente',
+            'AUTORIZADA' => 'Autorizada',
+            'RECUSADA' => 'Recusada',
+            default => $statusAutorizacao,
+        };
+        ?>
+
+        <?= htmlspecialchars(
+            $statusAutorizacaoLabel
+        ) ?>
+    </div>
+</div>
 
             <div class="form-group">
                 <label>Data e hora da saída</label>
@@ -177,6 +202,162 @@ $statusLabel = match ($status) {
 
     </div>
 
+        <div class="content-card">
+
+        <h2>Checklist de saída</h2>
+
+        <?php if (empty($checklistSaida)): ?>
+
+            <p>
+                Nenhum checklist de saída registrado para esta movimentação.
+            </p>
+
+        <?php else: ?>
+
+            <div class="table-responsive">
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th>Ordem</th>
+                            <th>Item</th>
+                            <th>Obrigatório</th>
+                            <th>Status</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <?php foreach ($checklistSaida as $item): ?>
+
+                            <tr>
+
+                                <td>
+                                    <?= (int) $item['ordem'] ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $item['descricao']
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= !empty($item['obrigatorio'])
+                                        ? 'Sim'
+                                        : 'Não'
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?= !empty($item['status'])
+                                        ? htmlspecialchars($item['status'])
+                                        : 'Não respondido'
+                                    ?>
+                                </td>
+
+                                <td>
+                                    <?= !empty($item['observacao'])
+                                        ? htmlspecialchars($item['observacao'])
+                                        : '—'
+                                    ?>
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </div>
+
+    <div class="content-card">
+
+    <h2>Checklist de retorno</h2>
+
+    <?php if (empty($checklistRetorno)): ?>
+
+        <p>
+            Nenhum checklist de retorno registrado para esta movimentação.
+        </p>
+
+    <?php else: ?>
+
+        
+
+        <div class="table-responsive">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Ordem</th>
+                        <th>Item</th>
+                        <th>Obrigatório</th>
+                        <th>Status</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <?php foreach ($checklistRetorno as $item): ?>
+
+                        <tr>
+
+                            <td>
+                                <?= (int) $item['ordem'] ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    $item['descricao']
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= !empty($item['obrigatorio'])
+                                    ? 'Sim'
+                                    : 'Não'
+                                ?>
+                            </td>
+
+                            <td>
+                                <?= !empty($item['status'])
+                                    ? htmlspecialchars($item['status'])
+                                    : 'Não respondido'
+                                ?>
+                            </td>
+
+                            <td>
+                                <?= !empty($item['observacao'])
+                                    ? htmlspecialchars($item['observacao'])
+                                    : '—'
+                                ?>
+                            </td>
+
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    <?php endif; ?>
+
+</div>
+
     <div class="content-card">
 
         <h2>Dados do retorno</h2>
@@ -246,16 +427,47 @@ $statusLabel = match ($status) {
 
     <?php if ($status === 'ABERTA'): ?>
 
-    <div class="content-card">
+<div class="content-card">
 
-        <div class="form-actions">
+    <div class="form-actions">
 
-            <a
-                href="/saidas/<?= (int) $movimentacao['id'] ?>/retorno"
-                class="btn btn-primary"
+        <?php if (
+            ($movimentacao['status_autorizacao_saida'] ?? 'PENDENTE')
+            === 'PENDENTE'
+        ): ?>
+
+            <form
+                action="/saidas/<?= (int) $movimentacao['id'] ?>/autorizar"
+                method="POST"
+                style="display: inline;"
             >
-                Registrar retorno
-            </a>
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    onclick="return confirm(
+                        'Tem certeza que deseja autorizar esta saída?'
+                    );"
+                >
+                    Autorizar saída
+                </button>
+            </form>
+
+        <?php endif; ?>
+
+        <?php if (
+    ($movimentacao['status_autorizacao_saida'] ?? 'PENDENTE')
+    === 'AUTORIZADA'
+    && empty($movimentacao['data_hora_retorno'])
+): ?>
+
+    <a
+        href="/saidas/<?= (int) $movimentacao['id'] ?>/retorno"
+        class="btn btn-primary"
+    >
+        Registrar retorno
+    </a>
+
+<?php endif; ?>
 
             <form
                 action="/saidas/<?= (int) $movimentacao['id'] ?>/cancelar"

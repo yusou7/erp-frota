@@ -103,6 +103,13 @@ $router->post(
     fn() => (new MovimentacaoFrotaController())->store()
 );
 
+$router->post(
+    '/saidas/{movimentacaoId}/autorizar',
+    fn(int $movimentacaoId) =>
+        (new MovimentacaoFrotaController())
+            ->autorizarSaida($movimentacaoId)
+);
+
 $router->get(
     '/saidas/checklist-veiculo/{veiculoId}',
     fn(int $veiculoId) =>

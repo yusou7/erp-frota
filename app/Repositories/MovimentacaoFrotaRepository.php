@@ -75,6 +75,7 @@ public function buscarPorId(int $id): ?array
         m.observacoes_retorno,
 
         m.status,
+        m.status_autorizacao_saida,
 
         v.numero AS veiculo_numero,
         v.placa AS veiculo_placa,
@@ -316,7 +317,6 @@ public function registrarRetorno(
         data_hora_retorno = :data_hora_retorno,
         indicador_retorno = :indicador_retorno,
         observacoes_retorno = :observacoes_retorno,
-        status = 'FINALIZADA',
         atualizado_em = NOW()
     WHERE id = :id
       AND status = 'ABERTA'
@@ -326,9 +326,14 @@ public function registrarRetorno(
 
     $statement->execute([
         'id' => $id,
-        'data_hora_retorno' => $dados['data_hora_retorno'],
-        'indicador_retorno' => $dados['indicador_retorno'],
-        'observacoes_retorno' => $dados['observacoes_retorno'],
+        'data_hora_retorno' =>
+            $dados['data_hora_retorno'],
+
+        'indicador_retorno' =>
+            $dados['indicador_retorno'],
+
+        'observacoes_retorno' =>
+            $dados['observacoes_retorno'],
     ]);
 }
 
@@ -453,6 +458,25 @@ public function buscarCarretaParaMovimentacao(
         : null;
 }
 
+public function finalizarMovimentacao(
+    int $movimentacaoId
+): void {
+    $sql = <<<SQL
+    UPDATE movimentacoes_frota
+    SET
+        status = 'FINALIZADA',
+        atualizado_em = NOW()
+    WHERE id = :id
+      AND status = 'ABERTA'
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'id' => $movimentacaoId,
+    ]);
+}
+
 public function atualizarIndicadorVeiculo(
     int $veiculoId,
     float $indicador
@@ -473,8 +497,101 @@ public function atualizarIndicadorVeiculo(
     ]);
 }
 
+public function buscarChecklistSaida(
+    int $movimentacaoId
+): array {
+    $sql = <<<SQL
+    SELECT
+        ci.id AS checklist_item_id,
+        ci.descricao,
+        ci.ordem,
+        ci.obrigatorio,
+
+        cr.status,
+        cr.observacao,
+        cr.respondido_em
+
+    FROM checklists c
+
+    INNER JOIN checklist_itens ci
+        ON ci.checklist_modelo_id = c.checklist_modelo_id
+
+    LEFT JOIN checklist_respostas cr
+        ON cr.checklist_id = c.id
+        AND cr.checklist_item_id = ci.id
+
+    WHERE c.movimentacao_id = :movimentacao_id
+      AND c.tipo = 'SAIDA'
+      AND ci.ativo = TRUE
+
+    ORDER BY ci.ordem ASC, ci.id ASC
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'movimentacao_id' => $movimentacaoId,
+    ]);
+
+    return $statement->fetchAll();
+}
+
+public function buscarChecklistRetorno(
+    int $movimentacaoId
+): array {
+    $sql = <<<SQL
+    SELECT
+        ci.id AS checklist_item_id,
+        ci.descricao,
+        ci.ordem,
+        ci.obrigatorio,
+
+        cr.status,
+        cr.observacao,
+        cr.respondido_em
+
+    FROM checklists c
+
+    INNER JOIN checklist_itens ci
+        ON ci.checklist_modelo_id = c.checklist_modelo_id
+
+    LEFT JOIN checklist_respostas cr
+        ON cr.checklist_id = c.id
+        AND cr.checklist_item_id = ci.id
+
+    WHERE c.movimentacao_id = :movimentacao_id
+      AND c.tipo = 'RETORNO'
+      AND ci.ativo = TRUE
+
+    ORDER BY ci.ordem ASC, ci.id ASC
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'movimentacao_id' => $movimentacaoId,
+    ]);
+
+    return $statement->fetchAll();
+}
+
 public function getConnection(): PDO
 {
     return $this->connection;
+}
+
+public function autorizarSaida(int $movimentacaoId): void
+{
+    $sql = "
+        UPDATE movimentacoes_frota
+        SET status_autorizacao_saida = 'AUTORIZADA'
+        WHERE id = :id
+    ";
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'id' => $movimentacaoId,
+    ]);
 }
 }

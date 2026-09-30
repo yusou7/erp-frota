@@ -27,10 +27,15 @@ class ChecklistExecucaoRepository
         c.iniciado_em,
         c.finalizado_em,
 
+        m.status_autorizacao_saida,
+
         cm.nome AS modelo_nome,
         cm.descricao AS modelo_descricao
 
     FROM checklists c
+
+    INNER JOIN movimentacoes_frota m
+        ON m.id = c.movimentacao_id
 
     INNER JOIN checklist_modelos cm
         ON cm.id = c.checklist_modelo_id
@@ -185,5 +190,36 @@ public function finalizar(int $checklistId): void
     $statement->execute([
         'checklist_id' => $checklistId,
     ]);
+}
+
+public function buscarDadosDoChecklist(
+    int $checklistId
+): ?array {
+    $sql = <<<SQL
+    SELECT
+        c.id AS checklist_id,
+        c.movimentacao_id,
+        c.tipo AS checklist_tipo,
+        c.status AS checklist_status,
+        m.status AS movimentacao_status,
+        m.status_autorizacao_saida
+    FROM checklists c
+    INNER JOIN movimentacoes_frota m
+        ON m.id = c.movimentacao_id
+    WHERE c.id = :checklist_id
+    LIMIT 1
+    SQL;
+
+    $statement = $this->connection->prepare($sql);
+
+    $statement->execute([
+        'checklist_id' => $checklistId,
+    ]);
+
+    $dados = $statement->fetch();
+
+    return $dados !== false
+        ? $dados
+        : null;
 }
 }

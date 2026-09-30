@@ -171,6 +171,12 @@ public function show(int $id): void
         return;
     }
 
+    $checklistSaida = $this->service
+        ->buscarChecklistSaida($id);
+
+        $checklistRetorno = $this->service
+    ->buscarChecklistRetorno($id);
+
     require __DIR__ . '/../../views/movimentacoes/show.php';
 }
 
@@ -198,14 +204,14 @@ public function return(int $id): void
         header("Location: /saidas/{$id}");
         exit;
     } catch (\Throwable $exception) {
-        Session::setFlash(
-            'error',
-            'Não foi possível registrar o retorno.'
-        );
+    Session::setFlash(
+        'error',
+        $exception->getMessage()
+    );
 
-        header("Location: /saidas/{$id}");
-        exit;
-    }
+    header("Location: /saidas/{$id}");
+    exit;
+}
 }
 
 public function cancelar(int $id): void
@@ -261,6 +267,36 @@ public function retorno(int $id): void
         exit;
     }
 
+    if (!empty($movimentacao['data_hora_retorno'])) {
+    Session::setFlash(
+        'error',
+        'O retorno desta movimentação já foi registrado.'
+    );
+
+    header("Location: /saidas/{$id}");
+    exit;
+}
+
     require __DIR__ . '/../../views/movimentacoes/retorno.php';
+}
+
+public function autorizarSaida(int $movimentacaoId): void
+{
+    try {
+        $this->service->autorizarSaida($movimentacaoId);
+
+        $_SESSION['success'] =
+            'Saída autorizada com sucesso.';
+
+    } catch (\Throwable $exception) {
+        $_SESSION['error'] =
+            $exception->getMessage();
+    }
+
+    header(
+        'Location: /saidas/' . $movimentacaoId
+    );
+
+    exit;
 }
 }

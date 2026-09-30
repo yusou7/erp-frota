@@ -7,24 +7,30 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Services\ChecklistExecucaoService;
 use App\Repositories\ChecklistExecucaoRepository;
+use App\Repositories\MovimentacaoFrotaRepository;
 
 class ChecklistExecucaoController
 {
     private ChecklistExecucaoService $service;
 
     public function __construct()
-    {
-        $database = new Database();
-        $connection = $database->getConnection();
+{
+    $database = new Database();
+    $connection = $database->getConnection();
 
-        $repository = new ChecklistExecucaoRepository(
-            $connection
-        );
+    $repository = new ChecklistExecucaoRepository(
+        $connection
+    );
 
-        $this->service = new ChecklistExecucaoService(
-            $repository
-        );
-    }
+    $movimentacaoRepository = new MovimentacaoFrotaRepository(
+        $connection
+    );
+
+    $this->service = new ChecklistExecucaoService(
+        $repository,
+        $movimentacaoRepository
+    );
+}
 
     public function show(
     int $movimentacaoId,

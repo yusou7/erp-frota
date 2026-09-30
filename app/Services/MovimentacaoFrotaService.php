@@ -503,6 +503,24 @@ public function registrarRetorno(
     int $movimentacaoId,
     array $dados
 ): void {
+    $movimentacao = $this->repository
+        ->buscarPorId($movimentacaoId);
+
+    if ($movimentacao === null) {
+        throw new \InvalidArgumentException(
+            'Movimentação não encontrada.'
+        );
+    }
+
+    if (
+        ($movimentacao['status_autorizacao_saida'] ?? 'PENDENTE')
+        !== 'AUTORIZADA'
+    ) {
+        throw new \InvalidArgumentException(
+            'A saída precisa ser autorizada antes de registrar o retorno.'
+        );
+    }
+
     $dadosValidados = $this->validarRetorno(
         $movimentacaoId,
         $dados
@@ -510,75 +528,75 @@ public function registrarRetorno(
 
     $checklistRespostas = $dados['checklist'] ?? [];
 
-if (!is_array($checklistRespostas)) {
-    throw new \InvalidArgumentException(
-        'Dados do checklist de retorno inválidos.'
-    );
-}
-
-if ($modeloChecklist !== null) {
-    $itensChecklist = $this->checklistService
-        ->listarItens(
-            (int) $modeloChecklist['id']
+    if (!is_array($checklistRespostas)) {
+        throw new \InvalidArgumentException(
+            'Dados do checklist de retorno inválidos.'
         );
-
-    foreach ($itensChecklist as $item) {
-        if (!$item['obrigatorio']) {
-            continue;
-        }
-
-        $itemId = (int) $item['id'];
-
-        $resposta = $checklistRespostas[$itemId] ?? null;
-
-        if (!is_array($resposta)) {
-            throw new \InvalidArgumentException(
-                'O item "' . $item['descricao'] .
-                '" precisa ser respondido.'
-            );
-        }
-
-        $status = trim(
-            $resposta['status'] ?? ''
-        );
-
-        if ($status === '') {
-            throw new \InvalidArgumentException(
-                'O item "' . $item['descricao'] .
-                '" precisa ter um status informado.'
-            );
-        }
-
-        if (!in_array(
-            $status,
-            ['OK', 'DEFEITO', 'NAO_APLICA'],
-            true
-        )) {
-            throw new \InvalidArgumentException(
-                'Status inválido no item "' .
-                $item['descricao'] . '".'
-            );
-        }
     }
-}
 
     $movimentacao = $dadosValidados['movimentacao'];
 
     $veiculo = $this->repository
-    ->buscarVeiculoParaMovimentacao(
-        (int) $movimentacao['veiculo_id']
-    );
+        ->buscarVeiculoParaMovimentacao(
+            (int) $movimentacao['veiculo_id']
+        );
 
-if ($veiculo === null) {
-    throw new \InvalidArgumentException(
-        'O veículo da movimentação não foi encontrado.'
-    );
-}
+    if ($veiculo === null) {
+        throw new \InvalidArgumentException(
+            'O veículo da movimentação não foi encontrado.'
+        );
+    }
 
-$modeloChecklist = $this->checklistService
-    ->buscarModeloAtivoPorTipoVeiculo(
-        (int) $veiculo['tipo_veiculo_id']
-    );
+    $modeloChecklist = $this->checklistService
+        ->buscarModeloAtivoPorTipoVeiculo(
+            (int) $veiculo['tipo_veiculo_id']
+        );
+
+    if ($modeloChecklist !== null) {
+        $itensChecklist = $this->checklistService
+            ->listarItens(
+                (int) $modeloChecklist['id']
+            );
+
+        foreach ($itensChecklist as $item) {
+            if (!$item['obrigatorio']) {
+                continue;
+            }
+
+            $itemId = (int) $item['id'];
+
+            $resposta = $checklistRespostas[$itemId] ?? null;
+
+            if (!is_array($resposta)) {
+                throw new \InvalidArgumentException(
+                    'O item "' . $item['descricao'] .
+                    '" precisa ser respondido.'
+                );
+            }
+
+            $status = trim(
+                $resposta['status'] ?? ''
+            );
+
+            if ($status === '') {
+                throw new \InvalidArgumentException(
+                    'O item "' . $item['descricao'] .
+                    '" precisa ter um status informado.'
+                );
+            }
+
+            if (!in_array(
+                $status,
+                ['OK', 'DEFEITO', 'NAO_APLICA'],
+                true
+            )) {
+                throw new \InvalidArgumentException(
+                    'Status inválido no item "' .
+                    $item['descricao'] . '".'
+                );
+            }
+        }
+    }
 
     $connection = $this->repository->getConnection();
 
@@ -624,7 +642,15 @@ $modeloChecklist = $this->checklistService
                 : null
         );
     }
+
+    $this->checklistService->finalizar(
+        $checklistId
+    );
 }
+
+$this->repository->finalizarMovimentacao(
+    $movimentacaoId
+);
 
         $this->repository->atualizarIndicadorVeiculo(
             (int) $movimentacao['veiculo_id'],
@@ -632,6 +658,7 @@ $modeloChecklist = $this->checklistService
         );
 
         $connection->commit();
+
     } catch (\Throwable $exception) {
         $connection->rollBack();
 
@@ -665,5 +692,66 @@ public function cancelar(int $movimentacaoId): void
     $this->repository->cancelar(
         $movimentacaoId
     );
+}
+
+public function autorizarSaida(int $movimentacaoId): void
+{
+    if ($movimentacaoId <= 0) {
+        throw new \InvalidArgumentException(
+            'A movimentação informada é inválida.'
+        );
+    }
+
+    $movimentacao = $this->repository
+        ->buscarPorId($movimentacaoId);
+
+    if ($movimentacao === null) {
+        throw new \InvalidArgumentException(
+            'A movimentação não foi encontrada.'
+        );
+    }
+
+    if ($movimentacao['status'] !== 'ABERTA') {
+        throw new \InvalidArgumentException(
+            'Somente uma movimentação aberta pode ser autorizada.'
+        );
+    }
+
+    if (
+        ($movimentacao['status_autorizacao_saida'] ?? 'PENDENTE')
+        !== 'PENDENTE'
+    ) {
+        throw new \InvalidArgumentException(
+            'A saída desta movimentação já foi processada.'
+        );
+    }
+
+    $this->repository->autorizarSaida($movimentacaoId);
+}
+
+public function buscarChecklistSaida(
+    int $movimentacaoId
+): array {
+    if ($movimentacaoId <= 0) {
+        throw new \InvalidArgumentException(
+            'Movimentação inválida.'
+        );
+    }
+
+    return $this->repository
+        ->buscarChecklistSaida($movimentacaoId);
+}
+
+public function buscarChecklistRetorno(
+    int $movimentacaoId
+): array {
+    if ($movimentacaoId <= 0) {
+        throw new \InvalidArgumentException(
+            'Movimentação inválida.'
+        );
+    }
+
+    return $this->repository
+        ->buscarChecklistRetorno($movimentacaoId);
 }
 }

@@ -108,11 +108,79 @@ public function salvarResposta(
         );
     }
 
+    $dadosChecklist = $this->execucaoRepository
+        ->buscarDadosDoChecklist($checklistId);
+
+    if ($dadosChecklist === null) {
+        throw new InvalidArgumentException(
+            'Checklist não encontrado.'
+        );
+    }
+
+    if (
+    $dadosChecklist['checklist_tipo'] === 'SAIDA'
+    && $dadosChecklist['status_autorizacao_saida']
+        === 'AUTORIZADA'
+) {
+    throw new InvalidArgumentException(
+        'O checklist de saída está bloqueado após a autorização da saída.'
+    );
+}
+
+if (
+    $dadosChecklist['checklist_tipo'] === 'RETORNO'
+    && $dadosChecklist['status'] === 'CONCLUIDO'
+) {
+    throw new InvalidArgumentException(
+        'O checklist de retorno está bloqueado após sua conclusão.'
+    );
+}
+
     $this->execucaoRepository->salvarResposta(
         $checklistId,
         $checklistItemId,
         $status,
         $observacao
+    );
+}
+
+public function finalizar(
+    int $checklistId
+): void {
+    if ($checklistId <= 0) {
+        throw new InvalidArgumentException(
+            'Checklist inválido.'
+        );
+    }
+
+    $dadosChecklist = $this->execucaoRepository
+        ->buscarDadosDoChecklist($checklistId);
+
+    if ($dadosChecklist === null) {
+        throw new InvalidArgumentException(
+            'Checklist não encontrado.'
+        );
+    }
+
+    if ($dadosChecklist['status'] === 'CONCLUIDO') {
+        throw new InvalidArgumentException(
+            'O checklist já está concluído.'
+        );
+    }
+
+    $pendentes = $this->execucaoRepository
+        ->contarItensObrigatoriosPendentes(
+            $checklistId
+        );
+
+    if ($pendentes > 0) {
+        throw new InvalidArgumentException(
+            'Existem itens obrigatórios pendentes no checklist.'
+        );
+    }
+
+    $this->execucaoRepository->finalizar(
+        $checklistId
     );
 }
 }

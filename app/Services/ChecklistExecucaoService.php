@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repositories\ChecklistExecucaoRepository;
+use App\Repositories\MovimentacaoFrotaRepository;
 use InvalidArgumentException;
 
 class ChecklistExecucaoService
 {
     public function __construct(
-        private ChecklistExecucaoRepository $repository
-    ) {
-    }
+    private ChecklistExecucaoRepository $repository,
+    private MovimentacaoFrotaRepository $movimentacaoRepository
+) {
+}
 
     public function buscarPorMovimentacao(
     int $movimentacaoId,
@@ -137,6 +139,21 @@ public function finalizar(int $checklistId): void
         );
     }
 
+    $dadosChecklist = $this->repository
+        ->buscarDadosDoChecklist($checklistId);
+
+    if ($dadosChecklist === null) {
+        throw new InvalidArgumentException(
+            'Checklist não encontrado.'
+        );
+    }
+
+    if ($dadosChecklist['status'] === 'CONCLUIDO') {
+        throw new InvalidArgumentException(
+            'O checklist já está concluído.'
+        );
+    }
+
     $pendentes = $this->contarItensObrigatoriosPendentes(
         $checklistId
     );
@@ -147,6 +164,15 @@ public function finalizar(int $checklistId): void
         );
     }
 
-    $this->repository->finalizar($checklistId);
+    $this->repository->finalizar(
+        $checklistId
+    );
+
+    if ($dadosChecklist['checklist_tipo'] === 'RETORNO') {
+        $this->movimentacaoRepository
+            ->finalizarMovimentacao(
+                (int) $dadosChecklist['movimentacao_id']
+            );
+    }
 }
 }
